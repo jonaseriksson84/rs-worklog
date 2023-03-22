@@ -1,6 +1,17 @@
-use std::{fs::OpenOptions, io::Write};
-
 use chrono::Local;
+use clap::Parser;
+
+use std::{
+    fs::{File, OpenOptions},
+    io::{BufRead, BufReader, Write},
+};
+
+#[derive(Parser, Debug)]
+#[command(name = "rs-worklog", version, author)]
+struct Opts {
+    #[arg(short, long)]
+    activity: String,
+}
 
 fn main() {
     let mut exit = false;
@@ -38,8 +49,8 @@ fn log_activity() {
     std::io::stdin().read_line(&mut activity).unwrap();
     activity = activity.trim().to_string();
 
-    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-    let log_entry = format!("{}: {}\n", timestamp, activity);
+    let date = Local::now().date_naive().format("%Y-%m-%d").to_string();
+    let log_entry = format!("{}: {}\n", date, activity);
 
     let mut file = OpenOptions::new()
         .create(true)
@@ -55,7 +66,19 @@ fn log_activity() {
 }
 
 fn view_activities() {
-    // TODO: Implement view_activities
+    let file = match File::open("worklog.txt") {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error opening file: {}", e);
+            return;
+        }
+    };
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        if let Ok(line) = line {
+            println!("{}", line);
+        }
+    }
 }
 
 fn edit_activity() {
