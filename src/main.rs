@@ -82,9 +82,134 @@ fn view_activities() {
 }
 
 fn edit_activity() {
-    // TODO: Implement edit_activity
+    let file = match File::open("worklog.txt") {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error opening file: {}", e);
+            return;
+        }
+    };
+    let reader = BufReader::new(file);
+    let mut activities: Vec<String> = reader.lines().filter_map(Result::ok).collect();
+
+    if activities.is_empty() {
+        println!("No activities found.");
+        return;
+    }
+
+    println!("Activities:");
+    for (index, activity) in activities.iter().enumerate() {
+        println!("{}: {}", index + 1, activity);
+    }
+
+    loop {
+        println!("Enter the line number to edit or enter 0 to cancel:");
+        let mut line_number = String::new();
+        std::io::stdin().read_line(&mut line_number).unwrap();
+        let line_number: usize = match line_number.trim().parse() {
+            Ok(num) => {
+                if num == 0 {
+                    return;
+                } else if num > activities.len() {
+                    println!("Invalid line number, please try again.");
+                    continue;
+                }
+                num
+            }
+            Err(_) => {
+                println!("Invalid input, please try again.");
+                continue;
+            }
+        };
+
+        println!("Enter the new activity:");
+        let mut new_activity = String::new();
+        std::io::stdin().read_line(&mut new_activity).unwrap();
+        new_activity = new_activity.trim().to_string();
+        let date = &activities[line_number - 1][..10];
+        activities[line_number - 1] = format!("{}: {}", date, new_activity);
+
+        let mut file = match File::create("worklog.txt") {
+            Ok(file) => file,
+            Err(e) => {
+                eprintln!("Error creating file: {}", e);
+                return;
+            }
+        };
+
+        for activity in activities {
+            if let Err(e) = writeln!(file, "{}", activity) {
+                eprintln!("Error writing to file: {}", e);
+                break;
+            }
+        }
+
+        println!("Activity edited successfully!");
+        break;
+    }
 }
 
+
 fn delete_activity() {
-    // TODO: Implement delete_activity
+    let file = match File::open("worklog.txt") {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error opening file: {}", e);
+            return;
+        }
+    };
+    let reader = BufReader::new(file);
+    let mut activities: Vec<String> = reader.lines().filter_map(Result::ok).collect();
+
+    if activities.is_empty() {
+        println!("No activities found.");
+        return;
+    }
+
+    println!("Activities:");
+    for (index, activity) in activities.iter().enumerate() {
+        println!("{}: {}", index + 1, activity);
+    }
+
+    loop {
+        println!("Enter the line number to delete or enter 0 to cancel:");
+        let mut line_number = String::new();
+        std::io::stdin().read_line(&mut line_number).unwrap();
+        let line_number: usize = match line_number.trim().parse() {
+            Ok(num) => {
+                if num == 0 {
+                    return;
+                } else if num > activities.len() {
+                    println!("Invalid line number, please try again.");
+                    continue;
+                }
+                num
+            }
+            Err(_) => {
+                println!("Invalid input, please try again.");
+                continue;
+            }
+        };
+
+        activities.remove(line_number - 1);
+
+        let mut file = match File::create("worklog.txt") {
+            Ok(file) => file,
+            Err(e) => {
+                eprintln!("Error creating file: {}", e);
+                return;
+            }
+        };
+
+        for activity in activities {
+            if let Err(e) = writeln!(file, "{}", activity) {
+                eprintln!("Error writing to file: {}", e);
+                break;
+            }
+        }
+
+        println!("Activity deleted successfully!");
+        break;
+    }
 }
+
